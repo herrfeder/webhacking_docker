@@ -1,0 +1,29 @@
+version: '3.5'
+
+networks:
+  vm_network:
+    external:
+      name: vm_network
+
+services:
+  webhacking_yeswehack:
+    build: 
+      context: webhacking-build
+    hostname: webhacking_yeswehack
+    restart: always
+    volumes:
+      - /root/docker_cookbooks/volumes/webhacking_userenv/:/home/user/
+      - /root/docker_cookbooks/volumes/webhacking_tools/:/home/user/tools/
+      #- /root/docker_cookbooks/volumes/webhacking_bountydata/:/home/user/bountydata/
+      - /dev/shm:/dev/shm
+      - /dev/net/tun:/dev/net/tun  
+    env_file:
+      - secrets/webhacking.env
+    expose:   
+      - "5900"
+      - "22"
+    cap_add:
+      - NET_ADMIN
+    networks:
+      - vm_network
+ 
