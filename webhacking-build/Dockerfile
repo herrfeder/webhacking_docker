@@ -60,7 +60,7 @@ RUN apt update \
 
 # python library
 RUN apt-get update \
-    && apt-get install -y python3-pip python3-dev build-essential \
+    && apt-get install -y python3-pip python3-dev build-essential libcurl4-openssl-dev libssl-dev \
     && ln -s /usr/bin/python3 /usr/local/bin/python \
     && apt-get autoclean -y \
     && apt-get autoremove -y \
@@ -72,6 +72,7 @@ RUN apt-get update \
 RUN apt-get update \
     && apt-get install -y openjdk-13-jre \
     && apt-get install -y terminator vim vim-gtk tmux unzip
+    && apt-get install -y 
 
 RUN apt-get install -y openssh-server \
     && apt-get install -y git \
@@ -79,11 +80,18 @@ RUN apt-get install -y openssh-server \
 
 RUN mkdir -p /run/sshd
 
-# webhacking stuff
+# webhacking aptitude stuff
 
 RUN apt-get update \
     && apt-get install -y nmap curl \
-    && apt-get install -y golang
+    && apt-get install -y golang cewl wordlists dirb
+
+RUN apt -y install cewl wordlists dirb
+
+
+# webhacking pip stuff
+
+RUN pip3 install wfuzz==3.1 pycurl==7.44.1
 
 
 COPY rootfs /

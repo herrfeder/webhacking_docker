@@ -1,9 +1,8 @@
 version: '3.5'
 
-networks:
-  vm_network:
-    external:
-      name: vm_network
+volumes:
+  persist-data:
+  user-env:
 
 services:
   webhacking_yeswehack:
@@ -12,9 +11,8 @@ services:
     hostname: webhacking_yeswehack
     restart: always
     volumes:
-      - /root/docker_cookbooks/volumes/webhacking_userenv/:/home/user/
-      - /root/docker_cookbooks/volumes/webhacking_tools/:/home/user/tools/
-      #- /root/docker_cookbooks/volumes/webhacking_bountydata/:/home/user/bountydata/
+      - persist-data:/data
+      - user-env:/home/user/      
       - /dev/shm:/dev/shm
       - /dev/net/tun:/dev/net/tun  
     env_file:
@@ -24,6 +22,4 @@ services:
       - "22"
     cap_add:
       - NET_ADMIN
-    networks:
-      - vm_network
  
