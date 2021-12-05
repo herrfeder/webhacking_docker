@@ -4,11 +4,9 @@
 # base system
 ################################################################################
 
-FROM ubuntu:20.04 
+FROM kalilinux/kali-rolling
 
-
-
-RUN sed -i 's#http://archive.ubuntu.com/ubuntu/#mirror://mirrors.ubuntu.com/mirrors.txt#' /etc/apt/sources.list;
+#RUN sed -i 's#http://archive.ubuntu.com/ubuntu/#mirror://mirrors.ubuntu.com/mirrors.txt#' /etc/apt/sources.list;
 
 
 # built-in packages
@@ -26,7 +24,7 @@ RUN apt update \
 RUN apt update \
     && apt install -y --no-install-recommends --allow-unauthenticated \
         xvfb x11vnc \
-        vim-tiny firefox ttf-ubuntu-font-family ttf-wqy-zenhei  \
+        vim-tiny firefox-esr ttf-ubuntu-font-family ttf-wqy-zenhei  \
     && apt autoclean -y \
     && apt autoremove -y
 
@@ -70,8 +68,8 @@ RUN apt-get update \
 # environment prep
 
 RUN apt-get update \
-    && apt-get install -y openjdk-13-jre \
-    && apt-get install -y terminator vim vim-gtk tmux unzip
+    && apt-get install -y openjdk-17-jre \
+    && apt-get install -y terminator vim vim-gtk tmux unzip \
     && apt-get install -y 
 
 RUN apt-get install -y openssh-server \
@@ -80,13 +78,24 @@ RUN apt-get install -y openssh-server \
 
 RUN mkdir -p /run/sshd
 
+
+# generic hacking stuff
+
+RUN apt-get install -y ncat netcat-traditional
+
 # webhacking aptitude stuff
 
 RUN apt-get update \
     && apt-get install -y nmap curl \
-    && apt-get install -y golang cewl wordlists dirb
+    && apt-get install -y golang cewl dirb
 
-RUN apt -y install cewl wordlists dirb
+
+RUN git clone https://github.com/robertdavidgraham/masscan && \
+    cd masscan && \
+    apt-get install -y git gcc make libpcap-dev && \
+    make install
+
+RUN go get github.com/OJ/gobuster
 
 
 # webhacking pip stuff

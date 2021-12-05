@@ -5,10 +5,10 @@ volumes:
   user-env:
 
 services:
-  webhacking_yeswehack:
+  webhacking-container:
     build: 
       context: webhacking-build
-    hostname: webhacking_yeswehack
+    hostname: webhacking-container
     restart: always
     volumes:
       - persist-data:/data
@@ -17,9 +17,11 @@ services:
       - /dev/net/tun:/dev/net/tun  
     env_file:
       - secrets/webhacking.env
-    expose:   
-      - "5900"
-      - "22"
+    ports:   
+      - "5900:5900"
+      - "2222:22"
     cap_add:
       - NET_ADMIN
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
  
