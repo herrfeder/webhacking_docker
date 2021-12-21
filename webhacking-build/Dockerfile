@@ -24,16 +24,12 @@ RUN apt update \
 RUN apt update \
     && apt install -y --no-install-recommends --allow-unauthenticated \
         xvfb x11vnc \
-        vim-tiny firefox-esr ttf-ubuntu-font-family ttf-wqy-zenhei  \
+        firefox-esr ttf-ubuntu-font-family ttf-wqy-zenhei  \
     && apt autoclean -y \
     && apt autoremove -y
 
 RUN apt update \
-    && apt install -y gpg-agent \
-    && curl -LO https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
-    && (dpkg -i ./google-chrome-stable_current_amd64.deb || apt-get install -fy) \
-    && curl -sSL https://dl.google.com/linux/linux_signing_key.pub | apt-key add \
-    && rm google-chrome-stable_current_amd64.deb
+    && apt install -y gpg-agent
 
 RUN apt update \
     && apt install -y --no-install-recommends --allow-unauthenticated \
@@ -76,6 +72,8 @@ RUN apt-get install -y openssh-server \
     && apt-get install -y git \
     && apt-get install -y parallel openvpn 
 
+RUN apt-get install -y freerdp2-x11
+
 RUN mkdir -p /run/sshd
 
 
@@ -86,16 +84,15 @@ RUN apt-get install -y ncat netcat-traditional
 # webhacking aptitude stuff
 
 RUN apt-get update \
-    && apt-get install -y nmap curl \
-    && apt-get install -y golang cewl dirb
-
+    && apt-get install -y nmap curl golang \
+    && apt-get install -y cewl dirb dirsearch
 
 RUN git clone https://github.com/robertdavidgraham/masscan && \
     cd masscan && \
     apt-get install -y git gcc make libpcap-dev && \
     make install
 
-RUN go get github.com/OJ/gobuster
+RUN apt-get install
 
 
 # webhacking pip stuff
@@ -103,10 +100,28 @@ RUN go get github.com/OJ/gobuster
 RUN pip3 install wfuzz==3.1 pycurl==7.44.1
 
 
+# vscode server
+
+ENV VERSION 3.12.0
+ENV DOMAIN localhost
+ENV DOCKER_VERSION 20.10.7
+
+
+RUN apt update \
+    && apt install iptables golang g++ make jq screen tmux nodejs bash ca-certificates openssl curl git zip unzip net-tools wget -y \
+    && update-ca-certificates \
+    && apt-get clean \
+    && wget https://github.com/cdr/code-server/releases/download/v${VERSION}/code-server-${VERSION}-linux-amd64.tar.gz \
+    && tar -xzf code-server-${VERSION}-linux-amd64.tar.gz \
+    && mv code-server-${VERSION}-linux-amd64/ /code-server \
+    && rm code-server-${VERSION}-linux-amd64.tar.gz
+
+RUN mkdir /root/.config
+
 COPY rootfs /
 
 WORKDIR /root
-ENV HOME=/home/ubuntu \
+ENV HOME=/root \
     SHELL=/bin/bash
 HEALTHCHECK --interval=30s --timeout=5s CMD curl --fail http://127.0.0.1:6079/api/health
 

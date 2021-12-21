@@ -10,6 +10,7 @@ services:
       context: webhacking-build
     hostname: webhacking-container
     restart: always
+    privileged: true
     volumes:
       - persist-data:/data
       - user-env:/home/user/      
@@ -20,6 +21,7 @@ services:
     ports:   
       - "5900:5900"
       - "2222:22"
+      - "8080:8080"
     cap_add:
       - NET_ADMIN
     sysctls:

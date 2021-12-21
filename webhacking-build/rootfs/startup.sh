@@ -78,4 +78,4 @@ HTTP_PASSWORD=
 #rm -rf vimconfig
 #chown user:user ~/.tmux.conf
 
-exec /bin/tini -- supervisord -n -c /etc/supervisor/supervisord.conf
+exec /bin/tini -- supervisord -n -c /etc/supervisor/conf.d/supervisord.conf
