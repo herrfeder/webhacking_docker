@@ -1,13 +1,6 @@
-# Built with arch: amd64 flavor: lxde image: ubuntu:20.04
-#
-################################################################################
-# base system
-################################################################################
-
 FROM kalilinux/kali-rolling
 
-#RUN sed -i 's#http://archive.ubuntu.com/ubuntu/#mirror://mirrors.ubuntu.com/mirrors.txt#' /etc/apt/sources.list;
-
+ARG BURPVERSION
 
 # built-in packages
 ENV DEBIAN_FRONTEND noninteractive
@@ -15,16 +8,17 @@ RUN apt update \
     && apt install -y --no-install-recommends software-properties-common curl apache2-utils \
     && apt update \
     && apt install -y --no-install-recommends --allow-unauthenticated \
-        supervisor nginx sudo net-tools zenity xz-utils \
-        dbus-x11 x11-utils alsa-utils \
-        mesa-utils libgl1-mesa-dri \
+        supervisor sudo net-tools zenity xz-utils \
+        dbus-x11 x11-utils \
+	xserver-xorg-core xserver-xorg-video-fbdev xserver-xorg-input-evdev xinit xfonts-base \
     && apt autoclean -y \
     && apt autoremove -y
+
 # install debs error if combine together
 RUN apt update \
     && apt install -y --no-install-recommends --allow-unauthenticated \
         xvfb x11vnc \
-        firefox-esr ttf-ubuntu-font-family ttf-wqy-zenhei  \
+        firefox-esr  \
     && apt autoclean -y \
     && apt autoremove -y
 
@@ -33,12 +27,9 @@ RUN apt update \
 
 RUN apt update \
     && apt install -y --no-install-recommends --allow-unauthenticated \
-        lxde gtk2-engines-murrine gnome-themes-standard gtk2-engines-pixbuf gtk2-engines-murrine arc-theme \
+        lxde gtk2-engines-murrine gnome-themes-extra gtk2-engines-pixbuf arc-theme \
     && apt autoclean -y \
     && apt autoremove -y
-
-# Additional packages require ~600MB
-# libreoffice  pinta language-pack-zh-hant language-pack-gnome-zh-hant firefox-locale-zh-hant libreoffice-l10n-zh-tw
 
 # tini to fix subreap
 ARG TINI_VERSION=v0.18.0
@@ -60,69 +51,60 @@ RUN apt-get update \
     && apt-get autoremove -y \
     && rm -rf /var/cache/apt/* /tmp/a.txt /tmp/b.txt
 
-
 # environment prep
-
 RUN apt-get update \
-    && apt-get install -y openjdk-17-jre \
-    && apt-get install -y terminator vim vim-gtk tmux unzip \
-    && apt-get install -y 
+    && apt-get install -y openjdk-11-jre openjdk-11-jdk openjdk-11-jdk-headless \
+    && apt-get install -y terminator vim tmux zip unzip \
+    && apt-get install -y default-mysql-client tree
 
 RUN apt-get install -y openssh-server \
     && apt-get install -y git \
-    && apt-get install -y parallel openvpn 
+    && apt-get install -y parallel openvpn rsync
 
-RUN apt-get install -y freerdp2-x11
+RUN apt-get install -y freerdp2-x11 krdc
 
 RUN mkdir -p /run/sshd
 
-
 # generic hacking stuff
-
-RUN apt-get install -y ncat netcat-traditional
+RUN apt-get install -y ncat netcat-traditional metasploit-framework python3-impacket webshells jd-gui burpsuite
 
 # webhacking aptitude stuff
-
 RUN apt-get update \
-    && apt-get install -y nmap curl golang \
-    && apt-get install -y cewl dirb dirsearch
+    && apt-get install -y nmap curl \
+    && apt-get install -y cewl dirb dirsearch dotdotpwn
 
-RUN git clone https://github.com/robertdavidgraham/masscan && \
-    cd masscan && \
-    apt-get install -y git gcc make libpcap-dev && \
-    make install
-
-RUN apt-get install
-
+RUN useradd -ms /bin/bash user && usermod -aG sudo user
 
 # webhacking pip stuff
+RUN pip3 install --break-system-packages wfuzz==3.1 pycurl==7.44.1 BeautifulSoup4 random_user_agent
 
-RUN pip3 install wfuzz==3.1 pycurl==7.44.1
-
+# developer pip stuff
+RUN pip3 install --break-system-packages flask-cors websocket python-engineio==3.14.2 python-socketio[client]==4.6.0
 
 # vscode server
-
 ENV VERSION 3.12.0
 ENV DOMAIN localhost
 ENV DOCKER_VERSION 20.10.7
 
-
+# install prerequisities for code-server
 RUN apt update \
-    && apt install iptables golang g++ make jq screen tmux nodejs bash ca-certificates openssl curl git zip unzip net-tools wget -y \
+    && apt install ca-certificates nodejs git wget -y \
     && update-ca-certificates \
-    && apt-get clean \
-    && wget https://github.com/cdr/code-server/releases/download/v${VERSION}/code-server-${VERSION}-linux-amd64.tar.gz \
-    && tar -xzf code-server-${VERSION}-linux-amd64.tar.gz \
-    && mv code-server-${VERSION}-linux-amd64/ /code-server \
-    && rm code-server-${VERSION}-linux-amd64.tar.gz
+    && apt-get clean
 
-RUN mkdir /root/.config
+# install code-server
+RUN mkdir -p ~/.local/lib ~/.local/bin && \
+    curl -fL https://github.com/coder/code-server/releases/download/v${VERSION}/code-server-${VERSION}-linux-amd64.tar.gz \
+    | tar -C ~/.local/lib -xz && \
+    mv ~/.local/lib/code-server-${VERSION}-linux-amd64 ~/.local/lib/code-server-${VERSION} && \
+    ln -s ~/.local/lib/code-server-${VERSION}/bin/code-server ~/.local/bin/code-server
 
+RUN mkdir /root/.config && cp /root/.bashrc /home/user/.bashrc && chown user:user /home/user/.bashrc
+RUN ls -la /home/user/
 COPY rootfs /
 
-WORKDIR /root
-ENV HOME=/root \
+ENV HOME=/home/user \
     SHELL=/bin/bash
-HEALTHCHECK --interval=30s --timeout=5s CMD curl --fail http://127.0.0.1:6079/api/health
 
+WORKDIR /root
 ENTRYPOINT ["/startup.sh"]

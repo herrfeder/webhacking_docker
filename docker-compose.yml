@@ -8,9 +8,12 @@ services:
   webhacking-container:
     build: 
       context: webhacking-build
+      args:
+        BURPVERSION: "2022.5"
+    security_opt:
+      - seccomp:unconfined
     hostname: webhacking-container
     restart: always
-    privileged: true
     volumes:
       - persist-data:/data
       - user-env:/home/user/      
